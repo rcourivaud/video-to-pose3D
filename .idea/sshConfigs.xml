@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="10.66.235.221" id="1b3f853c-6fc5-4896-a346-278a7457c0b6" port="22" customName="TencentServer" nameFormat="CUSTOM">
+        <option name="customName" value="TencentServer" />
+      </sshConfig>
+    </configs>
+  </component>
+</project>

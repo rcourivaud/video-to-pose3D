@@ -1,0 +1,14 @@
+opencv-python
+requests
+pika
+visdom
+h5py
+visdom
+nibabel
+tqdm
+ffmpeg
+pillow
+scipy
+pandas
+matplotlib
+boto3
