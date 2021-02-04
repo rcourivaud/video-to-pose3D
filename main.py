@@ -6,13 +6,12 @@ import time
 import requests
 import os
 
-sys.path.append("video-to-pose3D")
-sys.path.append("video-to-pose3D/joints_detectors/Alphapose")
-
 from videopose import inference_video
+from build import build
 
 RABBITMQ_USERNAME = os.environ.get("RABBITMQ_USERNAME")
 RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD")
+RABBITMQ_QUEUE = os.environ.get("RABBITMQ_QUEUE")
 
 KEYPOINT_MAPPING = {
     "nose": 0,
@@ -72,7 +71,6 @@ def process_message(ch, model, properties, body):
         build_json_results(job_id)
         requests.put('http://api:8008/jobs/' + job_id, json={'status': 'PROCESSED'})
     except Exception as e:
-
         requests.put('http://api:8008/jobs/' + job_id, json={'status': 'FAILED'})
         raise e
 
@@ -88,8 +86,8 @@ def main():
                                                                            heartbeat=6000,
                                                                            blocked_connection_timeout=3000))
             channel = connection.channel()
-            channel.queue_declare(queue='phya')
-            channel.basic_consume(queue='phya', on_message_callback=process_message, auto_ack=True)
+            channel.queue_declare(queue=RABBITMQ_QUEUE)
+            channel.basic_consume(queue=RABBITMQ_QUEUE, on_message_callback=process_message, auto_ack=True)
             channel.start_consuming()
         except pika.exceptions.AMQPConnectionError:
             logging.info("Failed to connect to RabbitMQ")
@@ -97,4 +95,5 @@ def main():
 
 
 if __name__ == '__main__':
+    build()
     main()
