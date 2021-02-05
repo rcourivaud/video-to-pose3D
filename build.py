@@ -7,8 +7,9 @@ import logging
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+
 ROOT_DIR = f"{SCRIPT_DIR}/"
-BUCKET_NAME = os.environ.get("BUCKET_NAME")
+MODELS_BUCKET_NAME = os.environ.get("MODELS_BUCKET_NAME")
 
 os.system(f"mkdir -p {ROOT_DIR}/checkpoint")
 os.system(f"mkdir -p  {ROOT_DIR}/joints_detectors/hrnet/models/pytorch//pose_coco/")
@@ -34,9 +35,10 @@ def build():
     s3_client = session.resource('s3')
 
     for file, directory in tqdm(files_directory.items()):
+        logging.debug(f"Start downloading {file}...")
         file_name = os.path.join(ROOT_DIR, directory, file)
         if not os.path.exists(file_name):
-            s3_client.Bucket(BUCKET_NAME).download_file(file, file_name)
+            s3_client.Bucket(MODELS_BUCKET_NAME).download_file(file, file_name)
             logging.debug(f"File {file} successfully downloaded")
         else:
             logging.debug(f"File {file} already exists")
