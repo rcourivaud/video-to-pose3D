@@ -6,7 +6,7 @@ import logging
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 AWSAccessKeyId = os.environ.get("AWSAccessKeyId")
 AWSSecretKey = os.environ.get("AWSSecretKey")
-ROOT_DIR = f"{SCRIPT_DIR}/video-to-pose3D"
+ROOT_DIR = f"{SCRIPT_DIR}/"
 BUCKET_NAME = os.environ.get("BUCKET_NAME")
 
 os.system(f"mkdir -p {ROOT_DIR}/checkpoint")
