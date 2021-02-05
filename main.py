@@ -69,9 +69,9 @@ def process_message(ch, model, properties, body):
     try:
         inference_video('uploads/' + job_id + '.mp4', 'alpha_pose')
         build_json_results(job_id)
-        requests.put('http://api:8008/jobs/' + job_id, json={'status': 'PROCESSED'})
+        requests.put('http://api:8000/jobs/' + job_id, json={'status': 'PROCESSED'})
     except Exception as e:
-        requests.put('http://api:8008/jobs/' + job_id, json={'status': 'FAILED'})
+        requests.put('http://api:8000/jobs/' + job_id, json={'status': 'FAILED'})
         raise e
 
 
