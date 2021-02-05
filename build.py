@@ -28,20 +28,20 @@ files_directory = {
 
 def build():
     session = boto3.Session(
-        aws_access_key_id=AWSAccessKeyId,
-        aws_secret_access_key=AWSSecretKey,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     )
 
     s3_client = session.resource('s3')
 
     for file, directory in tqdm(files_directory.items()):
-        logging.debug(f"Start downloading {file}...")
+        logging.info(f"Start downloading {file}...")
         file_name = os.path.join(ROOT_DIR, directory, file)
         if not os.path.exists(file_name):
             s3_client.Bucket(MODELS_BUCKET_NAME).download_file(file, file_name)
-            logging.debug(f"File {file} successfully downloaded")
+            logging.info(f"File {file} successfully downloaded")
         else:
-            logging.debug(f"File {file} already exists")
+            logging.info(f"File {file} already exists")
 
 
 if __name__ == "__main__":
