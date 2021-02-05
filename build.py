@@ -3,9 +3,10 @@ import os
 from tqdm import tqdm
 import logging
 
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-AWSAccessKeyId = os.environ.get("AWSAccessKeyId")
-AWSSecretKey = os.environ.get("AWSSecretKey")
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 ROOT_DIR = f"{SCRIPT_DIR}/"
 BUCKET_NAME = os.environ.get("BUCKET_NAME")
 
