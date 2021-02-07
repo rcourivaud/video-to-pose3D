@@ -1,4 +1,5 @@
 opencv-python==4.1.0.25
+matplotlib==3.2.2
 requests
 pika
 visdom
@@ -10,5 +11,4 @@ ffmpeg
 pillow
 scipy
 pandas
-matplotlib
 boto3
