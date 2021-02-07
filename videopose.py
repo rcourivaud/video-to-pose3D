@@ -126,6 +126,8 @@ def main(args):
         args.viz_output = 'outputs/alpha_result.mp4'
 
     from common.visualization import render_animation
+    print("anim_output")
+    print(anim_output)
     render_animation(input_keypoints, anim_output,
                      Skeleton(), 25, args.viz_bitrate, np.array(70., dtype=np.float32), args.viz_output,
                      limit=args.viz_limit, downsample=args.viz_downsample, size=args.viz_size,
