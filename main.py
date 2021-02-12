@@ -8,6 +8,7 @@ import os
 
 from videopose import inference_video
 from build import build
+import math
 
 RABBITMQ_USERNAME = os.environ.get("RABBITMQ_USERNAME")
 RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD")
@@ -34,8 +35,67 @@ KEYPOINT_MAPPING = {
 }
 
 
+def get_2d_angle(p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
+
+    myradians = math.atan2(y2 - y1, x2 - x1)
+    mydegrees = math.degrees(myradians)
+    return mydegrees
+
+
+def get_2d_distance(p1, p2):
+    x1, y1 = p1
+    x2, y2 = p2
+
+    distance = math.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2)
+    return distance
+
+
+def get_2d_velocity(p1, p2, fps=25):
+    distance = get_2d_distance(p1, p2)
+    velocity = distance * 1 / 25
+    return velocity
+
+
+def get_2d_acceleration(p1, p2, p3, fps=25):
+    velo1 = get_2d_velocity(p1, p2, fps=fps)
+    velo2 = get_2d_velocity(p2, p3, fps=fps)
+    acceleration = (velo2 - velo1) * 1 / 25
+    return acceleration
+
+
+def build_metadata(poses_2d):
+    data = []
+    for i in range(len(poses_2d)):
+        pose_data = {}
+        for joint in KEYPOINT_MAPPING.keys():
+            d = {}
+            v_0 = np.array([poses_2d[i][joint]["x"], poses_2d[i][joint]["y"]])
+            v_1 = np.array([poses_2d[i - 1][joint]["x"], poses_2d[i - 1][joint]["y"]]) if i > 0 else None
+            v_2 = np.array([poses_2d[i - 2][joint]["x"], poses_2d[i - 2][joint]["y"]]) if i > 1 else None
+            if i > 0:
+                d["distance"] = get_2d_distance(v_1, v_0)
+            else:
+                d["distance"] = None
+            if i > 0:
+                d["velocity"] = get_2d_velocity(v_1, v_0)
+            else:
+                d["velocity"] = None
+
+            if i > 1:
+                d["acceleration"] = get_2d_acceleration(v_2,
+                                                        v_1,
+                                                        v_0)
+            else:
+                d["acceleration"] = None
+            pose_data[joint] = d
+        data.append(pose_data)
+    return data
+
+
 def process_json_file(json_data):
-    def _process_frame(keypoints):
+    def _process_frame(keypoints, d2=False):
         xs = [elt for e, elt in enumerate(keypoints) if e % 3 == 0]
         ys = [elt for e, elt in enumerate(keypoints) if e % 3 == 1]
         zs = [elt for e, elt in enumerate(keypoints) if e % 3 == 2]
@@ -43,14 +103,22 @@ def process_json_file(json_data):
             name: {
                 "x": xs[keypoint_index],
                 "y": ys[keypoint_index],
+            } if d2 else {
+                "x": xs[keypoint_index],
+                "y": ys[keypoint_index],
                 "z": zs[keypoint_index] * 100,
             } for name, keypoint_index in KEYPOINT_MAPPING.items()
         }
         return keypoints_mapped
 
+    d3_poses = [_process_frame(frame_result["keypoints"]) for frame_result in json_data]
+    d2_poses = [_process_frame(frame_result["keypoints"], d2=True) for frame_result in json_data]
+    metadata = build_metadata(d2_poses)
     processed_results = dict(
-        poses=[_process_frame(frame_result["keypoints"]) for frame_result in json_data],
-        frames=len(json_data)
+        poses=d3_poses,
+        poses_2d=d2_poses,
+        frames=len(json_data),
+        metadata=metadata
     )
     return processed_results
 

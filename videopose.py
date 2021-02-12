@@ -14,7 +14,9 @@ from common.utils import Timer, evaluate, add_path
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-metadata = {'layout_name': 'coco', 'num_joints': 17, 'keypoints_symmetry': [[1, 3, 5, 7, 9, 11, 13, 15], [2, 4, 6, 8, 10, 12, 14, 16]]}
+GENERATE_OUTPUT = os.environ.get("GENERATE_OUTPUT", False)
+metadata = {'layout_name': 'coco', 'num_joints': 17,
+            'keypoints_symmetry': [[1, 3, 5, 7, 9, 11, 13, 15], [2, 4, 6, 8, 10, 12, 14, 16]]}
 
 add_path()
 
@@ -78,7 +80,8 @@ def main(args):
     # normlization keypoints  Suppose using the camera parameter
     keypoints = normalize_screen_coordinates(keypoints[..., :2], w=1000, h=1002)
 
-    model_pos = TemporalModel(17, 2, 17, filter_widths=[3, 3, 3, 3, 3], causal=args.causal, dropout=args.dropout, channels=args.channels,
+    model_pos = TemporalModel(17, 2, 17, filter_widths=[3, 3, 3, 3, 3], causal=args.causal, dropout=args.dropout,
+                              channels=args.channels,
                               dense=args.dense)
 
     if torch.cuda.is_available():
@@ -122,17 +125,18 @@ def main(args):
     ckpt, time3 = ckpt_time(time2)
     print('-------------- generate reconstruction 3D data spends {:.2f} seconds'.format(ckpt))
 
-    if not args.viz_output:
-        args.viz_output = 'outputs/alpha_result.mp4'
+    if GENERATE_OUTPUT:
+        if not args.viz_output:
+            args.viz_output = 'outputs/alpha_result.mp4'
 
-    from common.visualization import render_animation
-    print("anim_output")
-    print(anim_output)
-    render_animation(input_keypoints, anim_output,
-                      Skeleton(), 25, args.viz_bitrate, np.array(70., dtype=np.float32), args.viz_output,
-                      limit=args.viz_limit, downsample=args.viz_downsample, size=args.viz_size,
-                      input_video_path=args.viz_video, viewport=(1000, 1002),
-                      input_video_skip=args.viz_skip)
+        from common.visualization import render_animation
+        print("anim_output")
+        print(anim_output)
+        render_animation(input_keypoints, anim_output,
+                         Skeleton(), 25, args.viz_bitrate, np.array(70., dtype=np.float32), args.viz_output,
+                         limit=args.viz_limit, downsample=args.viz_downsample, size=args.viz_size,
+                         input_video_path=args.viz_video, viewport=(1000, 1002),
+                         input_video_skip=args.viz_skip)
 
     ckpt, time4 = ckpt_time(time3)
     print('total spend {:2f} second'.format(ckpt))
