@@ -5,7 +5,7 @@ import logging
 import time
 import requests
 import os
-
+import numpy as np
 from videopose import inference_video
 from build import build
 import math
