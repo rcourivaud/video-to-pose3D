@@ -54,7 +54,7 @@ def get_2d_distance(p1, p2):
 
 def get_2d_velocity(p1, p2, fps=25):
     distance = get_2d_distance(p1, p2)
-    velocity = distance * 1 / 25
+    velocity = distance * 1 / fps
     return velocity
 
 
@@ -65,21 +65,21 @@ def get_2d_acceleration(p1, p2, p3, fps=25):
     return acceleration
 
 
-def _build_metas(v_0, v_1, v_2, i):
+def _build_metas(v_0, v_1, v_2, i, fps=25):
     d = {}
     if i > 0:
         d["distance"] = get_2d_distance(v_0, v_2)
     else:
         d["distance"] = None
     if i > 0:
-        d["velocity"] = get_2d_velocity(v_0, v_1)
+        d["velocity"] = get_2d_velocity(v_0, v_1, fps=fps)
     else:
         d["velocity"] = None
 
     if i > 1:
         d["acceleration"] = get_2d_acceleration(v_0,
                                                 v_1,
-                                                v_2)
+                                                v_2, fps=fps)
     else:
         d["acceleration"] = None
 
@@ -101,7 +101,7 @@ def build_estimated_metadata(poses_2d, fps=25):
             v_1 = np.array([np.mean(x_1), np.mean(y_1)])
             v_2 = np.array([np.mean(x_2), np.mean(y_2)])
 
-            pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i)
+            pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i, fps=1)
         data.append(pose_data)
     return data
 
@@ -115,7 +115,7 @@ def build_metadata(poses_2d):
             v_0 = np.array([poses_2d[i][joint]["x"], poses_2d[i][joint]["y"]])
             v_1 = np.array([poses_2d[i - 1][joint]["x"], poses_2d[i - 1][joint]["y"]]) if i > 0 else None
             v_2 = np.array([poses_2d[i - 2][joint]["x"], poses_2d[i - 2][joint]["y"]]) if i > 1 else None
-            pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i)
+            pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i, fps=fps)
         data.append(pose_data)
     return data
 
