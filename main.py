@@ -65,6 +65,47 @@ def get_2d_acceleration(p1, p2, p3, fps=25):
     return acceleration
 
 
+def _build_metas(v_0, v_1, v_2, i):
+    d = {}
+    if i > 0:
+        d["distance"] = get_2d_distance(v_0, v_2)
+    else:
+        d["distance"] = None
+    if i > 0:
+        d["velocity"] = get_2d_velocity(v_0, v_1)
+    else:
+        d["velocity"] = None
+
+    if i > 1:
+        d["acceleration"] = get_2d_acceleration(v_0,
+                                                v_1,
+                                                v_2)
+    else:
+        d["acceleration"] = None
+
+    return d
+
+def build_estimated_metadata(poses_2d, fps=25):
+    data = []
+    for i in range(0, len(poses_2d), FPS):
+        pose_data = {}
+        for joint in KEYPOINT_MAPPING.keys():
+            x_0_slice = slice(i, i + fps)
+            x_1_slice = slice(i - fps, i)
+            x_2_slice = slice(i - 2 * fps, i - fps)
+            x_0, y_0 = [e[joint]["x"] for e in poses_2d[x_0_slice]], [e[joint]["y"] for e in poses_2d[x_0_slice]]
+            x_1, y_1 = [e[joint]["x"] for e in poses_2d[x_1_slice]], [e[joint]["y"] for e in poses_2d[x_1_slice]]
+            x_2, y_2 = [e[joint]["x"] for e in poses_2d[x_2_slice]], [e[joint]["y"] for e in poses_2d[x_2_slice]]
+
+            v_0 = np.array([np.mean(x_0), np.mean(y_0)])
+            v_1 = np.array([np.mean(x_1), np.mean(y_1)])
+            v_2 = np.array([np.mean(x_2), np.mean(y_2)])
+
+            pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i)
+        data.append(pose_data)
+    return data
+
+
 def build_metadata(poses_2d):
     data = []
     for i in range(len(poses_2d)):
@@ -74,22 +115,7 @@ def build_metadata(poses_2d):
             v_0 = np.array([poses_2d[i][joint]["x"], poses_2d[i][joint]["y"]])
             v_1 = np.array([poses_2d[i - 1][joint]["x"], poses_2d[i - 1][joint]["y"]]) if i > 0 else None
             v_2 = np.array([poses_2d[i - 2][joint]["x"], poses_2d[i - 2][joint]["y"]]) if i > 1 else None
-            if i > 0:
-                d["distance"] = get_2d_distance(v_1, v_0)
-            else:
-                d["distance"] = None
-            if i > 0:
-                d["velocity"] = get_2d_velocity(v_1, v_0)
-            else:
-                d["velocity"] = None
-
-            if i > 1:
-                d["acceleration"] = get_2d_acceleration(v_2,
-                                                        v_1,
-                                                        v_0)
-            else:
-                d["acceleration"] = None
-            pose_data[joint] = d
+            pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i)
         data.append(pose_data)
     return data
 
@@ -114,11 +140,13 @@ def process_json_file(json_data):
     d3_poses = [_process_frame(frame_result["keypoints"]) for frame_result in json_data]
     d2_poses = [_process_frame(frame_result["keypoints"], d2=True) for frame_result in json_data]
     metadata = build_metadata(d2_poses)
+    estimated_metadata = build_estimated_metadata(d2_poses)
     processed_results = dict(
         poses=d3_poses,
         poses_2d=d2_poses,
         frames=len(json_data),
-        metadata=metadata
+        metadata=metadata,
+        estimated_metadata=estimated_metadata,
     )
     return processed_results
 
