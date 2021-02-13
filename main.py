@@ -68,7 +68,7 @@ def get_2d_acceleration(p1, p2, p3, fps=25):
 def _build_metas(v_0, v_1, v_2, i, fps=25):
     d = {}
     if i > 0:
-        d["distance"] = get_2d_distance(v_0, v_2)
+        d["distance"] = get_2d_distance(v_0, v_1)
     else:
         d["distance"] = None
     if i > 0:
