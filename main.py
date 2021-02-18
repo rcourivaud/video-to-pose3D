@@ -14,6 +14,7 @@ RABBITMQ_USERNAME = os.environ.get("RABBITMQ_USERNAME")
 RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD")
 RABBITMQ_QUEUE = os.environ.get("RABBITMQ_QUEUE")
 
+DEFAULT_VALUE = -1000
 KEYPOINT_MAPPING = {
     "nose": 0,
     "left_eye": 1,
@@ -70,24 +71,24 @@ def _build_metas(v_0, v_1, v_2, i, fps=25):
     if i > 0:
         d["distance"] = get_2d_distance(v_0, v_1)
     else:
-        d["distance"] = None
+        d["distance"] = DEFAULT_VALUE
     if i > 0:
         d["velocity"] = get_2d_velocity(v_0, v_1, fps=fps)
     else:
-        d["velocity"] = None
+        d["velocity"] = DEFAULT_VALUE
 
     if i > 1:
         d["acceleration"] = get_2d_acceleration(v_0,
                                                 v_1,
                                                 v_2, fps=fps)
     else:
-        d["acceleration"] = None
+        d["acceleration"] = DEFAULT_VALUE
 
     return d
 
 def build_estimated_metadata(poses_2d, fps=25):
     data = []
-    for i in range(0, len(poses_2d), FPS):
+    for i in range(0, len(poses_2d), fps):
         pose_data = {}
         for joint in KEYPOINT_MAPPING.keys():
             x_0_slice = slice(i, i + fps)
@@ -106,7 +107,7 @@ def build_estimated_metadata(poses_2d, fps=25):
     return data
 
 
-def build_metadata(poses_2d):
+def build_metadata(poses_2d, fps=25):
     data = []
     for i in range(len(poses_2d)):
         pose_data = {}
