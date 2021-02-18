@@ -86,6 +86,7 @@ def _build_metas(v_0, v_1, v_2, i, fps=25):
 
     return d
 
+
 def build_estimated_metadata(poses_2d, fps=25):
     data = []
     for i in range(0, len(poses_2d), fps):
