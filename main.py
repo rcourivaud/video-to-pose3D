@@ -73,6 +73,10 @@ def _build_metas(v_0, v_1, v_2, i, fps=25):
     else:
         d["distance"] = DEFAULT_VALUE
     if i > 0:
+        d["angle"] = get_2d_angle(v_0, v_1)
+    else:
+        d["angle"] = DEFAULT_VALUE
+    if i > 0:
         d["velocity"] = get_2d_velocity(v_0, v_1, fps=fps)
     else:
         d["velocity"] = DEFAULT_VALUE
