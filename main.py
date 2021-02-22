@@ -9,6 +9,7 @@ import numpy as np
 from videopose import inference_video
 from build import build
 import math
+from math import atan2, degrees
 
 RABBITMQ_USERNAME = os.environ.get("RABBITMQ_USERNAME")
 RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD")
@@ -91,23 +92,65 @@ def _build_metas(v_0, v_1, v_2, i, fps=25):
     return d
 
 
+def angle_between(p1, p2, p3):
+    x1, y1 = p1
+    x2, y2 = p2
+    x3, y3 = p3
+    deg1 = (360 + degrees(atan2(x1 - x2, y1 - y2))) % 360
+    deg2 = (360 + degrees(atan2(x3 - x2, y3 - y2))) % 360
+    return deg2 - deg1 if deg1 <= deg2 else 360 - (deg1 - deg2)
+
+
+def get_numpy_point(d):
+    return np.array([
+        np.mean([p["x"] for p in d]),
+        np.mean([p["y"] for p in d])
+    ])
+
+
+def get_angle_from_points_names(frames, names):
+    assert len(names) == 3
+    x1 = get_numpy_point([f[names[0]] for f in frames])
+    x2 = get_numpy_point([f[names[1]] for f in frames])
+    x3 = get_numpy_point([f[names[2]] for f in frames])
+    return angle_between(x1, x2, x3)
+
+
 def build_estimated_metadata(poses_2d, fps=25):
     data = []
     for i in range(0, len(poses_2d), fps):
         pose_data = {}
+        x_0_slice = slice(i, i + fps)
+        x_1_slice = slice(i - fps, i)
+        x_2_slice = slice(i - 2 * fps, i - fps)
+        x_0 = poses_2d[x_0_slice]
+        x_1 = poses_2d[x_1_slice]
+        x_2 = poses_2d[x_2_slice]
         for joint in KEYPOINT_MAPPING.keys():
-            x_0_slice = slice(i, i + fps)
-            x_1_slice = slice(i - fps, i)
-            x_2_slice = slice(i - 2 * fps, i - fps)
-            x_0, y_0 = [e[joint]["x"] for e in poses_2d[x_0_slice]], [e[joint]["y"] for e in poses_2d[x_0_slice]]
-            x_1, y_1 = [e[joint]["x"] for e in poses_2d[x_1_slice]], [e[joint]["y"] for e in poses_2d[x_1_slice]]
-            x_2, y_2 = [e[joint]["x"] for e in poses_2d[x_2_slice]], [e[joint]["y"] for e in poses_2d[x_2_slice]]
+            x_0, y_0 = [e[joint]["x"] for e in x_0], [e[joint]["y"] for e in x_0]
+            x_1, y_1 = [e[joint]["x"] for e in x_1], [e[joint]["y"] for e in x_1]
+            x_2, y_2 = [e[joint]["x"] for e in x_2], [e[joint]["y"] for e in x_2]
 
             v_0 = np.array([np.mean(x_0), np.mean(y_0)])
             v_1 = np.array([np.mean(x_1), np.mean(y_1)])
             v_2 = np.array([np.mean(x_2), np.mean(y_2)])
 
             pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i, fps=1)
+
+        pose_data["left_ankle_knee_hip"] = get_angle_from_points_names(x_0, ["left_ankle", "left_knee", "left_hip"])
+        pose_data["right_ankle_knee_hip"] = get_angle_from_points_names(x_0, ["right_ankle", "right_knee", "right_hip"])
+        pose_data["left_knee_hip_shoulder"] = get_angle_from_points_names(x_0,
+                                                                          ["left_knee", "left_hip", "left_shoulder"])
+        pose_data["right_knee_hip_shoulder"] = get_angle_from_points_names(x_0, ["right_knee", "right_hip",
+                                                                                 "right_shoulder"])
+        pose_data["left_wrist_elbow_shoulder"] = get_angle_from_points_names(x_0, ["left_wrist", "left_elbow",
+                                                                                   "left_shoulder"])
+        pose_data["right_wrist_elbow_shoulder"] = get_angle_from_points_names(x_0, ["right_wrist", "right_elbow",
+                                                                                    "right_shoulder"])
+        pose_data["left_elbow_shoulder_hip"] = get_angle_from_points_names(x_0,
+                                                                           ["left_elbow", "left_shoulder", "left_hip"])
+        pose_data["right_elbow_shoulder_hip"] = get_angle_from_points_names(x_0, ["right_elbow", "right_shoulder",
+                                                                                  "right_hip"])
         data.append(pose_data)
     return data
 
