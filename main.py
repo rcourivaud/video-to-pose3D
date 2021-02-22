@@ -123,13 +123,13 @@ def build_estimated_metadata(poses_2d, fps=25):
         x_0_slice = slice(i, i + fps)
         x_1_slice = slice(i - fps, i)
         x_2_slice = slice(i - 2 * fps, i - fps)
-        x_0 = poses_2d[x_0_slice]
-        x_1 = poses_2d[x_1_slice]
-        x_2 = poses_2d[x_2_slice]
+        x_0_values = poses_2d[x_0_slice]
+        x_1_values = poses_2d[x_1_slice]
+        x_2_values = poses_2d[x_2_slice]
         for joint in KEYPOINT_MAPPING.keys():
-            x_0, y_0 = [e[joint]["x"] for e in x_0], [e[joint]["y"] for e in x_0]
-            x_1, y_1 = [e[joint]["x"] for e in x_1], [e[joint]["y"] for e in x_1]
-            x_2, y_2 = [e[joint]["x"] for e in x_2], [e[joint]["y"] for e in x_2]
+            x_0, y_0 = [e[joint]["x"] for e in x_0_values], [e[joint]["y"] for e in x_0_values]
+            x_1, y_1 = [e[joint]["x"] for e in x_1_values], [e[joint]["y"] for e in x_1_values]
+            x_2, y_2 = [e[joint]["x"] for e in x_2_values], [e[joint]["y"] for e in x_2_values]
 
             v_0 = np.array([np.mean(x_0), np.mean(y_0)])
             v_1 = np.array([np.mean(x_1), np.mean(y_1)])
@@ -137,22 +137,23 @@ def build_estimated_metadata(poses_2d, fps=25):
 
             pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i, fps=1)
 
-        pose_data["left_ankle_knee_hip"] = get_angle_from_points_names(x_0, ["left_ankle", "left_knee", "left_hip"])
-        pose_data["right_ankle_knee_hip"] = get_angle_from_points_names(x_0, ["right_ankle", "right_knee", "right_hip"])
-        pose_data["left_knee_hip_shoulder"] = get_angle_from_points_names(x_0,
+        pose_data["left_ankle_knee_hip_angle"] = get_angle_from_points_names(x_0_values, ["left_ankle", "left_knee", "left_hip"])
+        pose_data["right_ankle_knee_hip_angle"] = get_angle_from_points_names(x_0_values, ["right_ankle", "right_knee", "right_hip"])
+        pose_data["left_knee_hip_shoulder_angle"] = get_angle_from_points_names(x_0_values,
                                                                           ["left_knee", "left_hip", "left_shoulder"])
-        pose_data["right_knee_hip_shoulder"] = get_angle_from_points_names(x_0, ["right_knee", "right_hip",
+        pose_data["right_knee_hip_shoulder_angle"] = get_angle_from_points_names(x_0_values, ["right_knee", "right_hip",
                                                                                  "right_shoulder"])
-        pose_data["left_wrist_elbow_shoulder"] = get_angle_from_points_names(x_0, ["left_wrist", "left_elbow",
+        pose_data["left_wrist_elbow_shoulder_angle"] = get_angle_from_points_names(x_0_values, ["left_wrist", "left_elbow",
                                                                                    "left_shoulder"])
-        pose_data["right_wrist_elbow_shoulder"] = get_angle_from_points_names(x_0, ["right_wrist", "right_elbow",
+        pose_data["right_wrist_elbow_shoulder_angle"] = get_angle_from_points_names(x_0_values, ["right_wrist", "right_elbow",
                                                                                     "right_shoulder"])
-        pose_data["left_elbow_shoulder_hip"] = get_angle_from_points_names(x_0,
+        pose_data["left_elbow_shoulder_hip_angle"] = get_angle_from_points_names(x_0_values,
                                                                            ["left_elbow", "left_shoulder", "left_hip"])
-        pose_data["right_elbow_shoulder_hip"] = get_angle_from_points_names(x_0, ["right_elbow", "right_shoulder",
+        pose_data["right_elbow_shoulder_hip_angle"] = get_angle_from_points_names(x_0_values, ["right_elbow", "right_shoulder",
                                                                                   "right_hip"])
         data.append(pose_data)
     return data
+
 
 
 def build_metadata(poses_2d, fps=25):
