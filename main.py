@@ -119,11 +119,11 @@ def get_angle_from_points_names(frames, names):
 def build_estimated_metadata(poses_2d, fps=25):
     data = []
     window = int(fps / 2)
-    for i in range(0, len(poses_2d), fps):
+    for i in range(0, len(poses_2d)):
         pose_data = {}
         x_0_slice = slice(i, i + window)
-        x_1_slice = slice(i - window, i)
-        x_2_slice = slice(i - 2 * window, i - window)
+        x_1_slice = slice(max(0,i - window), i)
+        x_2_slice = slice(max(i - 2 * window), i - window)
         x_0_values = poses_2d[x_0_slice]
         x_1_values = poses_2d[x_1_slice]
         x_2_values = poses_2d[x_2_slice]
@@ -132,7 +132,7 @@ def build_estimated_metadata(poses_2d, fps=25):
             p1 = get_numpy_point([e[joint] for e in x_1_values])
             p2 = get_numpy_point([e[joint] for e in x_2_values])
 
-            pose_data[joint] = _build_metas(p0, p1, p2, i=i, fps=1)
+            pose_data[joint] = _build_metas(p0, p1, p2, i=i, fps=25)
 
         pose_data["left_ankle_knee_hip_angle"] = get_angle_from_points_names(x_0_values,
                                                                              ["left_ankle", "left_knee", "left_hip"])
