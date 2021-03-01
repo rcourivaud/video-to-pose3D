@@ -122,8 +122,8 @@ def build_estimated_metadata(poses_2d, fps=25):
     for i in range(0, len(poses_2d)):
         pose_data = {}
         x_0_slice = slice(i, i + window)
-        x_1_slice = slice(max(0,i - window), i)
-        x_2_slice = slice(max(i - 2 * window), i - window)
+        x_1_slice = slice(max(0, i - window), i)
+        x_2_slice = slice(max(0, i - 2 * window), max(1, i - window))
         x_0_values = poses_2d[x_0_slice]
         x_1_values = poses_2d[x_1_slice]
         x_2_values = poses_2d[x_2_slice]
