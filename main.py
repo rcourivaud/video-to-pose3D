@@ -41,9 +41,9 @@ def get_2d_angle(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
 
-    myradians = math.atan2(y2 - y1, x2 - x1)
-    mydegrees = math.degrees(myradians)
-    return mydegrees
+    radians = math.atan2(y2 - y1, x2 - x1)
+    degrees = math.degrees(radians)
+    return degrees
 
 
 def get_2d_distance(p1, p2):
@@ -67,25 +67,25 @@ def get_2d_acceleration(p1, p2, p3, fps=25):
     return acceleration
 
 
-def _build_metas(v_0, v_1, v_2, i, fps=25):
+def _build_metas(p0, p1, p2, i, fps=25):
     d = {}
     if i > 0:
-        d["distance"] = get_2d_distance(v_0, v_1)
+        d["distance"] = get_2d_distance(p0, p1)
     else:
         d["distance"] = DEFAULT_VALUE
     if i > 0:
-        d["angle"] = get_2d_angle(v_0, v_1)
+        d["angle"] = get_2d_angle(p0, p1)
     else:
         d["angle"] = DEFAULT_VALUE
     if i > 0:
-        d["velocity"] = get_2d_velocity(v_0, v_1, fps=fps)
+        d["velocity"] = get_2d_velocity(p0, p1, fps=fps)
     else:
         d["velocity"] = DEFAULT_VALUE
 
     if i > 1:
-        d["acceleration"] = get_2d_acceleration(v_0,
-                                                v_1,
-                                                v_2, fps=fps)
+        d["acceleration"] = get_2d_acceleration(p0,
+                                                p1,
+                                                p2, fps=fps)
     else:
         d["acceleration"] = DEFAULT_VALUE
 
@@ -96,8 +96,8 @@ def angle_between(p1, p2, p3):
     x1, y1 = p1
     x2, y2 = p2
     x3, y3 = p3
-    deg1 = (360 + degrees(atan2(x1 - x2, y1 - y2))) % 360
-    deg2 = (360 + degrees(atan2(x3 - x2, y3 - y2))) % 360
+    deg1 = (360 + math.degrees(math.atan2(x1 - x2, y1 - y2))) % 360
+    deg2 = (360 + math.degrees(math.atan2(x3 - x2, y3 - y2))) % 360
     return deg2 - deg1 if deg1 <= deg2 else 360 - (deg1 - deg2)
 
 
@@ -118,42 +118,45 @@ def get_angle_from_points_names(frames, names):
 
 def build_estimated_metadata(poses_2d, fps=25):
     data = []
+    window = int(fps / 2)
     for i in range(0, len(poses_2d), fps):
         pose_data = {}
-        x_0_slice = slice(i, i + fps)
-        x_1_slice = slice(i - fps, i)
-        x_2_slice = slice(i - 2 * fps, i - fps)
+        x_0_slice = slice(i, i + window)
+        x_1_slice = slice(i - window, i)
+        x_2_slice = slice(i - 2 * window, i - window)
         x_0_values = poses_2d[x_0_slice]
         x_1_values = poses_2d[x_1_slice]
         x_2_values = poses_2d[x_2_slice]
         for joint in KEYPOINT_MAPPING.keys():
-            x_0, y_0 = [e[joint]["x"] for e in x_0_values], [e[joint]["y"] for e in x_0_values]
-            x_1, y_1 = [e[joint]["x"] for e in x_1_values], [e[joint]["y"] for e in x_1_values]
-            x_2, y_2 = [e[joint]["x"] for e in x_2_values], [e[joint]["y"] for e in x_2_values]
+            p0 = get_numpy_point([e[joint] for e in x_0_values])
+            p1 = get_numpy_point([e[joint] for e in x_1_values])
+            p2 = get_numpy_point([e[joint] for e in x_2_values])
 
-            v_0 = np.array([np.mean(x_0), np.mean(y_0)])
-            v_1 = np.array([np.mean(x_1), np.mean(y_1)])
-            v_2 = np.array([np.mean(x_2), np.mean(y_2)])
+            pose_data[joint] = _build_metas(p0, p1, p2, i=i, fps=1)
 
-            pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i, fps=1)
-
-        pose_data["left_ankle_knee_hip_angle"] = get_angle_from_points_names(x_0_values, ["left_ankle", "left_knee", "left_hip"])
-        pose_data["right_ankle_knee_hip_angle"] = get_angle_from_points_names(x_0_values, ["right_ankle", "right_knee", "right_hip"])
+        pose_data["left_ankle_knee_hip_angle"] = get_angle_from_points_names(x_0_values,
+                                                                             ["left_ankle", "left_knee", "left_hip"])
+        pose_data["right_ankle_knee_hip_angle"] = get_angle_from_points_names(x_0_values, ["right_ankle", "right_knee",
+                                                                                           "right_hip"])
         pose_data["left_knee_hip_shoulder_angle"] = get_angle_from_points_names(x_0_values,
-                                                                          ["left_knee", "left_hip", "left_shoulder"])
+                                                                                ["left_knee", "left_hip",
+                                                                                 "left_shoulder"])
         pose_data["right_knee_hip_shoulder_angle"] = get_angle_from_points_names(x_0_values, ["right_knee", "right_hip",
-                                                                                 "right_shoulder"])
-        pose_data["left_wrist_elbow_shoulder_angle"] = get_angle_from_points_names(x_0_values, ["left_wrist", "left_elbow",
-                                                                                   "left_shoulder"])
-        pose_data["right_wrist_elbow_shoulder_angle"] = get_angle_from_points_names(x_0_values, ["right_wrist", "right_elbow",
-                                                                                    "right_shoulder"])
+                                                                                              "right_shoulder"])
+        pose_data["left_wrist_elbow_shoulder_angle"] = get_angle_from_points_names(x_0_values,
+                                                                                   ["left_wrist", "left_elbow",
+                                                                                    "left_shoulder"])
+        pose_data["right_wrist_elbow_shoulder_angle"] = get_angle_from_points_names(x_0_values,
+                                                                                    ["right_wrist", "right_elbow",
+                                                                                     "right_shoulder"])
         pose_data["left_elbow_shoulder_hip_angle"] = get_angle_from_points_names(x_0_values,
-                                                                           ["left_elbow", "left_shoulder", "left_hip"])
-        pose_data["right_elbow_shoulder_hip_angle"] = get_angle_from_points_names(x_0_values, ["right_elbow", "right_shoulder",
-                                                                                  "right_hip"])
+                                                                                 ["left_elbow", "left_shoulder",
+                                                                                  "left_hip"])
+        pose_data["right_elbow_shoulder_hip_angle"] = get_angle_from_points_names(x_0_values,
+                                                                                  ["right_elbow", "right_shoulder",
+                                                                                   "right_hip"])
         data.append(pose_data)
     return data
-
 
 
 def build_metadata(poses_2d, fps=25):
@@ -162,10 +165,10 @@ def build_metadata(poses_2d, fps=25):
         pose_data = {}
         for joint in KEYPOINT_MAPPING.keys():
             d = {}
-            v_0 = np.array([poses_2d[i][joint]["x"], poses_2d[i][joint]["y"]])
-            v_1 = np.array([poses_2d[i - 1][joint]["x"], poses_2d[i - 1][joint]["y"]]) if i > 0 else None
-            v_2 = np.array([poses_2d[i - 2][joint]["x"], poses_2d[i - 2][joint]["y"]]) if i > 1 else None
-            pose_data[joint] = _build_metas(v_0, v_1, v_2, i=i, fps=fps)
+            p0 = np.array([poses_2d[i][joint]["x"], poses_2d[i][joint]["y"]])
+            p1 = np.array([poses_2d[i - 1][joint]["x"], poses_2d[i - 1][joint]["y"]]) if i > 0 else None
+            p2 = np.array([poses_2d[i - 2][joint]["x"], poses_2d[i - 2][joint]["y"]]) if i > 1 else None
+            pose_data[joint] = _build_metas(p0, p1, p2, i=i, fps=fps)
         data.append(pose_data)
     return data
 
