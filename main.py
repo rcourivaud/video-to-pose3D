@@ -14,7 +14,7 @@ from math import atan2, degrees
 RABBITMQ_USERNAME = os.environ.get("RABBITMQ_USERNAME")
 RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD")
 RABBITMQ_QUEUE = os.environ.get("RABBITMQ_QUEUE")
-ENV_TYPE = os.environ.get("ENV_TYPE")
+PROD = os.environ.get("PROD") == "true"
 API_TOKEN = os.environ.get("API_TOKEN")
 
 def read_results(id_):
@@ -66,7 +66,7 @@ def main():
                                                                            blocked_connection_timeout=3000))
             channel = connection.channel()
             channel.queue_declare(queue=RABBITMQ_QUEUE)
-            channel.basic_consume(queue=RABBITMQ_QUEUE, on_message_callback=process_message if ENV_TYPE == "prod" else process_test_message, auto_ack=True)
+            channel.basic_consume(queue=RABBITMQ_QUEUE, on_message_callback=process_message if PROD else process_test_message, auto_ack=True)
             channel.start_consuming()
         except pika.exceptions.AMQPConnectionError:
             logging.info("Failed to connect to RabbitMQ")
@@ -74,6 +74,6 @@ def main():
 
 
 if __name__ == '__main__':
-    if ENV_TYPE =="prod":
+    if PROD:
         build()
     main()
