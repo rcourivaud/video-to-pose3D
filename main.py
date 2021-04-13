@@ -27,7 +27,7 @@ def process_message(ch, model, properties, body):
     job_id = message['job_id']
     try:
         inference_video('uploads/' + job_id + '.mp4', 'alpha_pose')
-        with open("outputs/alpha_pose_{id}/alphapose-results.json".format(id=id_), mode="r") as f:
+        with open("outputs/alpha_pose_{id}/alphapose-results.json".format(id=job_id), mode="r") as f:
             requests.put('http://api:8000/jobs/' + job_id,
                          data=({"status": "PROCESSED"}),
                          files={'file': f},
