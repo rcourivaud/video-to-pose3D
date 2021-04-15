@@ -15,7 +15,7 @@ RABBITMQ_USERNAME = os.environ.get("RABBITMQ_USERNAME")
 RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD")
 RABBITMQ_QUEUE = os.environ.get("RABBITMQ_QUEUE")
 PROD = os.environ.get("PROD") == "true"
-API_TOKEN = os.environ.get("API_TOKEN")
+API_KEY = os.environ.get("API_KEY")
 
 def read_results(id_):
     with open("outputs/alpha_pose_{id}/alphapose-results.json".format(id=id_), 'r') as f:
@@ -48,7 +48,7 @@ def process_test_message(ch, model, properties, body):
         response = requests.put('http://api:8000/jobs/' + job_id,
                     data=({"status": "PROCESSED"}),
                     files={'file': f},
-                    headers={"x-token": API_TOKEN}
+                    headers={"x-token": API_KEY}
                      )
         print(response)
         print(response.text)
