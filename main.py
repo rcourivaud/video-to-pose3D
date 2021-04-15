@@ -31,12 +31,12 @@ def process_message(ch, model, properties, body):
             requests.put('http://api:8000/jobs/' + job_id,
                          data=({"status": "PROCESSED"}),
                          files={'file': f},
-                         headers={"x-token": "test"}
+                         headers={"x-token": API_KEY}
                          )
     except Exception as e:
         requests.put('http://api:8000/jobs/' + job_id,
                      data=({"status": "FAILED"}),
-                     headers = {"x-token": API_TOKEN}
+                     headers = {"x-token": API_KEY}
         )
         raise e
 
